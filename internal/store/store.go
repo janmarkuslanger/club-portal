@@ -3,17 +3,17 @@ package store
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 var (
@@ -26,30 +26,25 @@ var (
 const minPasswordLength = 8
 
 type User struct {
-	ID           string    `json:"id"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"password_hash"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           string    `json:"id" gorm:"primaryKey;size:32"`
+	Email        string    `json:"email" gorm:"uniqueIndex;size:320;not null"`
+	PasswordHash string    `json:"password_hash" gorm:"not null"`
+	CreatedAt    time.Time `json:"created_at" gorm:"autoCreateTime"`
 }
 
 type Club struct {
-	ID          string    `json:"id"`
-	OwnerID     string    `json:"owner_id"`
-	Name        string    `json:"name"`
+	ID          string    `json:"id" gorm:"primaryKey;size:32"`
+	OwnerID     string    `json:"owner_id" gorm:"uniqueIndex;size:32;not null"`
+	Name        string    `json:"name" gorm:"not null"`
 	Description string    `json:"description"`
-	Slug        string    `json:"slug"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Slug        string    `json:"slug" gorm:"uniqueIndex;size:160;not null"`
+	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
 type Store struct {
-	mu             sync.RWMutex
-	path           string
-	users          map[string]User
-	clubs          map[string]Club
-	emailToUserID  map[string]string
-	ownerToClubID  map[string]string
-	slugToClubID   map[string]string
+	db             *gorm.DB
+	policyMu       sync.RWMutex
 	passwordPolicy PasswordPolicy
 }
 
@@ -57,38 +52,35 @@ type PasswordPolicy struct {
 	MinLength int
 }
 
-type persistedData struct {
-	Users []User `json:"users"`
-	Clubs []Club `json:"clubs"`
-}
-
 func NewStore(path string) (*Store, error) {
 	if path == "" {
 		return nil, errors.New("store path is required")
 	}
 
-	s := &Store{
-		path:          path,
-		users:         make(map[string]User),
-		clubs:         make(map[string]Club),
-		emailToUserID: make(map[string]string),
-		ownerToClubID: make(map[string]string),
-		slugToClubID:  make(map[string]string),
-		passwordPolicy: PasswordPolicy{
-			MinLength: minPasswordLength,
-		},
-	}
-
-	if err := s.load(); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return nil, err
 	}
 
-	return s, nil
+	db, err := gorm.Open(sqlite.Open(path), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.AutoMigrate(&User{}, &Club{}); err != nil {
+		return nil, err
+	}
+
+	return &Store{
+		db: db,
+		passwordPolicy: PasswordPolicy{
+			MinLength: minPasswordLength,
+		},
+	}, nil
 }
 
 func (s *Store) SetPasswordPolicy(policy PasswordPolicy) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.policyMu.Lock()
+	defer s.policyMu.Unlock()
 
 	if policy.MinLength <= 0 {
 		policy.MinLength = minPasswordLength
@@ -97,18 +89,21 @@ func (s *Store) SetPasswordPolicy(policy PasswordPolicy) {
 }
 
 func (s *Store) CreateUser(email, password string) (User, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	cleanEmail := normalizeEmail(email)
 	if cleanEmail == "" {
 		return User{}, errors.New("email is required")
 	}
-	if len(password) < s.passwordPolicy.MinLength {
+	if len(password) < s.minPasswordLength() {
 		return User{}, ErrPasswordTooShort
 	}
-	if _, exists := s.emailToUserID[cleanEmail]; exists {
+
+	var existing User
+	err := s.db.Select("id").Where("email = ?", cleanEmail).First(&existing).Error
+	if err == nil {
 		return User{}, ErrEmailExists
+	}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return User{}, err
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -116,18 +111,14 @@ func (s *Store) CreateUser(email, password string) (User, error) {
 		return User{}, err
 	}
 
-	now := time.Now().UTC()
 	user := User{
 		ID:           newID(),
 		Email:        cleanEmail,
 		PasswordHash: string(hash),
-		CreatedAt:    now,
+		CreatedAt:    time.Now().UTC(),
 	}
 
-	s.users[user.ID] = user
-	s.emailToUserID[cleanEmail] = user.ID
-
-	if err := s.saveLocked(); err != nil {
+	if err := s.db.Create(&user).Error; err != nil {
 		return User{}, err
 	}
 
@@ -135,14 +126,14 @@ func (s *Store) CreateUser(email, password string) (User, error) {
 }
 
 func (s *Store) Authenticate(email, password string) (User, error) {
-	s.mu.RLock()
-	userID, ok := s.emailToUserID[normalizeEmail(email)]
-	if !ok {
-		s.mu.RUnlock()
+	var user User
+	err := s.db.Where("email = ?", normalizeEmail(email)).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return User{}, ErrInvalidCredentials
 	}
-	user := s.users[userID]
-	s.mu.RUnlock()
+	if err != nil {
+		return User{}, err
+	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return User{}, ErrInvalidCredentials
@@ -152,23 +143,19 @@ func (s *Store) Authenticate(email, password string) (User, error) {
 }
 
 func (s *Store) GetUser(id string) (User, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	user, ok := s.users[id]
-	return user, ok
+	var user User
+	if err := s.db.First(&user, "id = ?", id).Error; err != nil {
+		return User{}, false
+	}
+	return user, true
 }
 
 func (s *Store) GetClubByOwner(ownerID string) (Club, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	clubID, ok := s.ownerToClubID[ownerID]
-	if !ok {
+	var club Club
+	if err := s.db.Where("owner_id = ?", ownerID).First(&club).Error; err != nil {
 		return Club{}, false
 	}
-	club, ok := s.clubs[clubID]
-	return club, ok
+	return club, true
 }
 
 func (s *Store) UpsertClub(ownerID, name, description string) (Club, error) {
@@ -178,135 +165,83 @@ func (s *Store) UpsertClub(ownerID, name, description string) (Club, error) {
 	}
 
 	cleanDescription := strings.TrimSpace(description)
-	newSlug := slugify(cleanName)
-	if newSlug == "" {
-		newSlug = "club"
+	slugBase := slugify(cleanName)
+	if slugBase == "" {
+		slugBase = "club"
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	now := time.Now().UTC()
-	clubID, exists := s.ownerToClubID[ownerID]
-	if exists {
-		club := s.clubs[clubID]
-		uniqueSlug := s.uniqueSlugLocked(club.ID, newSlug)
-		if club.Slug != uniqueSlug {
-			delete(s.slugToClubID, club.Slug)
-			s.slugToClubID[uniqueSlug] = club.ID
+	var result Club
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		var existing Club
+		err := tx.Where("owner_id = ?", ownerID).First(&existing).Error
+		hasExisting := err == nil
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
 		}
 
-		club.Name = cleanName
-		club.Description = cleanDescription
-		club.Slug = uniqueSlug
-		club.UpdatedAt = now
-		s.clubs[club.ID] = club
-
-		if err := s.saveLocked(); err != nil {
-			return Club{}, err
+		currentID := ""
+		if hasExisting {
+			currentID = existing.ID
 		}
-		return club, nil
-	}
 
-	club := Club{
-		ID:          newID(),
-		OwnerID:     ownerID,
-		Name:        cleanName,
-		Description: cleanDescription,
-		Slug:        s.uniqueSlugLocked("", newSlug),
-		CreatedAt:   now,
-		UpdatedAt:   now,
-	}
+		uniqueSlug, err := uniqueSlug(tx, currentID, slugBase)
+		if err != nil {
+			return err
+		}
 
-	s.clubs[club.ID] = club
-	s.ownerToClubID[ownerID] = club.ID
-	s.slugToClubID[club.Slug] = club.ID
+		now := time.Now().UTC()
+		if hasExisting {
+			existing.Name = cleanName
+			existing.Description = cleanDescription
+			existing.Slug = uniqueSlug
+			existing.UpdatedAt = now
+			if err := tx.Save(&existing).Error; err != nil {
+				return err
+			}
+			result = existing
+			return nil
+		}
 
-	if err := s.saveLocked(); err != nil {
+		club := Club{
+			ID:          newID(),
+			OwnerID:     ownerID,
+			Name:        cleanName,
+			Description: cleanDescription,
+			Slug:        uniqueSlug,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+
+		if err := tx.Create(&club).Error; err != nil {
+			return err
+		}
+		result = club
+		return nil
+	})
+	if err != nil {
 		return Club{}, err
 	}
-	return club, nil
+	return result, nil
 }
 
 func (s *Store) AllClubs() []Club {
-	s.mu.RLock()
-	clubs := make([]Club, 0, len(s.clubs))
-	for _, club := range s.clubs {
-		clubs = append(clubs, club)
+	var clubs []Club
+	if err := s.db.Order("name asc").Order("slug asc").Find(&clubs).Error; err != nil {
+		return []Club{}
 	}
-	s.mu.RUnlock()
-
-	sort.Slice(clubs, func(i, j int) bool {
-		if clubs[i].Name == clubs[j].Name {
-			return clubs[i].Slug < clubs[j].Slug
-		}
-		return clubs[i].Name < clubs[j].Name
-	})
-
 	return clubs
 }
 
-func (s *Store) load() error {
-	data, err := os.ReadFile(s.path)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-		return err
+func (s *Store) minPasswordLength() int {
+	s.policyMu.RLock()
+	defer s.policyMu.RUnlock()
+	if s.passwordPolicy.MinLength <= 0 {
+		return minPasswordLength
 	}
-	if len(data) == 0 {
-		return nil
-	}
-
-	var payload persistedData
-	if err := json.Unmarshal(data, &payload); err != nil {
-		return err
-	}
-
-	for _, user := range payload.Users {
-		s.users[user.ID] = user
-		s.emailToUserID[normalizeEmail(user.Email)] = user.ID
-	}
-
-	for _, club := range payload.Clubs {
-		s.clubs[club.ID] = club
-		s.ownerToClubID[club.OwnerID] = club.ID
-		s.slugToClubID[club.Slug] = club.ID
-	}
-
-	return nil
+	return s.passwordPolicy.MinLength
 }
 
-func (s *Store) saveLocked() error {
-	if err := os.MkdirAll(filepath.Dir(s.path), 0o755); err != nil {
-		return err
-	}
-
-	payload := persistedData{
-		Users: make([]User, 0, len(s.users)),
-		Clubs: make([]Club, 0, len(s.clubs)),
-	}
-	for _, user := range s.users {
-		payload.Users = append(payload.Users, user)
-	}
-	for _, club := range s.clubs {
-		payload.Clubs = append(payload.Clubs, club)
-	}
-
-	data, err := json.MarshalIndent(payload, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	tmpPath := s.path + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0o600); err != nil {
-		return err
-	}
-
-	return os.Rename(tmpPath, s.path)
-}
-
-func (s *Store) uniqueSlugLocked(currentClubID, desired string) string {
+func uniqueSlug(tx *gorm.DB, currentClubID, desired string) (string, error) {
 	base := desired
 	if base == "" {
 		base = "club"
@@ -314,9 +249,16 @@ func (s *Store) uniqueSlugLocked(currentClubID, desired string) string {
 
 	slug := base
 	for i := 2; ; i++ {
-		existingID, exists := s.slugToClubID[slug]
-		if !exists || existingID == currentClubID {
-			return slug
+		query := tx.Model(&Club{}).Where("slug = ?", slug)
+		if currentClubID != "" {
+			query = query.Where("id <> ?", currentClubID)
+		}
+		var count int64
+		if err := query.Count(&count).Error; err != nil {
+			return "", err
+		}
+		if count == 0 {
+			return slug, nil
 		}
 		slug = fmt.Sprintf("%s-%d", base, i)
 	}

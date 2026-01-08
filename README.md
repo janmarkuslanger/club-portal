@@ -6,7 +6,7 @@ Minimaler Start fuer ein Sportvereins-Portal: Vereinsleiter koennen sich anmelde
 
 - Backend mit `graft` (Login, Registrierung, Clubdaten)
 - Statische Clubseiten mit `ssgo`
-- Dateibasiertes JSON-Store fuer schnelle Iteration
+- GORM Storage (SQLite) fuer saubere Datenabstraktion
 
 ## Lokales Setup
 
@@ -26,7 +26,7 @@ Die Seiten landen in `public/` und koennen lokal ueber `/clubs/<slug>/` aufgeruf
 
 ## Konfiguration (ENV)
 
-- `DATA_PATH` (default: `data/store.json`)
+- `DATA_PATH` (default: `data/store.db`)
 - `OUTPUT_DIR` (default: `public`)
 - `TEMPLATE_DIR` (default: `templates/site`)
 - `ASSET_DIR` (default: `static/site`)

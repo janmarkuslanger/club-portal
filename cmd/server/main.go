@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultDataPath    = "data/store.json"
+	defaultDataPath    = "data/store.db"
 	defaultOutputDir   = "public"
 	defaultTemplateDir = "templates/site"
 	defaultAssetDir    = "static/site"

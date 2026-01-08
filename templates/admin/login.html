@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ .Title }} · Club Portal</title>
+    <link rel="stylesheet" href="/admin-assets/admin.css" />
+  </head>
+  <body class="page">
+    <div class="bg-shape bg-shape--one"></div>
+    <div class="bg-shape bg-shape--two"></div>
+    <main class="shell">
+      <header class="brand">
+        <span class="brand__badge">CP</span>
+        <div>
+          <p class="brand__eyebrow">Club Portal</p>
+          <h1 class="brand__title">Vereinsleiter Login</h1>
+        </div>
+      </header>
+      <section class="card">
+        {{ if .Error }}
+        <div class="notice notice--error">{{ .Error }}</div>
+        {{ end }}
+        <form method="post" action="/login" class="stack">
+          <label class="field">
+            <span>E-Mail</span>
+            <input type="email" name="email" value="{{ .Email }}" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span>Passwort</span>
+            <input type="password" name="password" autocomplete="current-password" required />
+          </label>
+          <button class="button" type="submit">Anmelden</button>
+        </form>
+      </section>
+      <p class="meta">
+        Noch kein Zugang? <a href="/register">Jetzt registrieren</a>
+      </p>
+    </main>
+  </body>
+</html>

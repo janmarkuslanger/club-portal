@@ -1,0 +1,22 @@
+{{ define "root" }}
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ .Name }} · Club</title>
+    <link rel="stylesheet" href="/assets/site.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <div class="orb orb--one"></div>
+    <div class="orb orb--two"></div>
+    <main class="site">
+      {{ template "content" . }}
+    </main>
+    <footer class="footer">
+      <span>Club Portal · Static</span>
+    </footer>
+  </body>
+</html>
+{{ end }}

@@ -1,0 +1,6 @@
+github.com/janmarkuslanger/graft v0.0.2 h1:nEA8gqgVfiSf6eO3w0f9vGommeQZMXtoMsGHwM4TTQg=
+github.com/janmarkuslanger/graft v0.0.2/go.mod h1:1AK6fMl66swb8uv9WnBk7zftE1QdcM9ai/MIbNi4OhM=
+github.com/janmarkuslanger/ssgo v0.7.0 h1:4vI8SX7lsQCXPebd2DORHJNdOjlH0pNzG4ZHJaEAQ2U=
+github.com/janmarkuslanger/ssgo v0.7.0/go.mod h1:zzh5uIxJmV/C1vGzh9ybmmkXAFbmgDFexOXshFCukX8=
+golang.org/x/crypto v0.46.0 h1:cKRW/pmt1pKAfetfu+RCEvjvZkA9RimPbh7bhFjGVBU=
+golang.org/x/crypto v0.46.0/go.mod h1:Evb/oLKmMraqjZ2iQTwDwvCtJkczlDuTmdJXoZVzqU0=

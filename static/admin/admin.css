@@ -1,0 +1,237 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+:root {
+  --ink: #102a2b;
+  --muted: #52615e;
+  --accent: #ff6b4a;
+  --accent-dark: #d64e33;
+  --mint: #97e1c6;
+  --card: #fff9f1;
+  --border: rgba(16, 42, 43, 0.12);
+  --shadow: 0 20px 50px rgba(18, 48, 48, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at top left, #fde3c8 0%, transparent 45%),
+    radial-gradient(circle at 20% 30%, #d7f5e5 0%, transparent 40%),
+    linear-gradient(140deg, #fef9f4 0%, #f7f1e8 40%, #f3efe5 100%);
+  min-height: 100vh;
+}
+
+.page {
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-shape {
+  position: fixed;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0.35;
+  z-index: 0;
+}
+
+.bg-shape--one {
+  background: radial-gradient(circle at 30% 30%, #ffc6b3, #ff8461);
+  top: -120px;
+  right: -140px;
+}
+
+.bg-shape--two {
+  background: radial-gradient(circle at 30% 30%, #bdf2de, #6fd3b4);
+  bottom: -160px;
+  left: -120px;
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 92vw);
+  margin: 0 auto;
+  padding: 64px 0 80px;
+}
+
+.shell--wide {
+  width: min(980px, 92vw);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.brand__badge {
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+  padding: 12px 14px;
+  border-radius: 14px;
+  letter-spacing: 1px;
+}
+
+.brand__eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 12px;
+  margin: 0 0 4px;
+  color: var(--muted);
+}
+
+.brand__title {
+  margin: 0;
+  font-size: 28px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.card--accent {
+  background: linear-gradient(160deg, #fff4e9 0%, #fef0dc 100%);
+  border: 1px solid rgba(255, 107, 74, 0.18);
+}
+
+.grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.stack {
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field input,
+.field textarea {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 15px;
+  background: #fff;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: 2px solid rgba(255, 107, 74, 0.4);
+  border-color: rgba(255, 107, 74, 0.6);
+}
+
+.button {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  padding: 12px 22px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 20px rgba(255, 107, 74, 0.25);
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(255, 107, 74, 0.35);
+}
+
+.button--ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.notice {
+  padding: 12px 16px;
+  border-radius: 14px;
+  margin: 12px 0 20px;
+  font-size: 14px;
+}
+
+.notice--error {
+  background: #ffe6e1;
+  border: 1px solid rgba(255, 107, 74, 0.4);
+  color: #b63a1f;
+}
+
+.notice--info {
+  background: #e7f7f0;
+  border: 1px solid rgba(62, 173, 134, 0.4);
+  color: #1e6d54;
+}
+
+.meta {
+  margin-top: 18px;
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.meta a {
+  color: var(--ink);
+}
+
+.dashboard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.muted {
+  color: var(--muted);
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+.slug {
+  background: rgba(16, 42, 43, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 16px 0;
+  display: grid;
+  gap: 6px;
+}
+
+.slug span {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.slug strong {
+  font-size: 18px;
+}
+
+@media (max-width: 700px) {
+  .dashboard-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ .Title }} · Club Portal</title>
+    <link rel="stylesheet" href="/admin-assets/admin.css" />
+  </head>
+  <body class="page">
+    <div class="bg-shape bg-shape--one"></div>
+    <div class="bg-shape bg-shape--two"></div>
+    <main class="shell shell--wide">
+      <header class="dashboard-head">
+        <div>
+          <p class="brand__eyebrow">Club Portal</p>
+          <h1 class="brand__title">Dein Vereinsbereich</h1>
+        </div>
+        <form method="post" action="/logout">
+          <button class="button button--ghost" type="submit">Abmelden</button>
+        </form>
+      </header>
+      {{ if .Error }}
+      <div class="notice notice--error">{{ .Error }}</div>
+      {{ end }}
+      {{ if .Info }}
+      <div class="notice notice--info">{{ .Info }}</div>
+      {{ end }}
+      <section class="grid">
+        <div class="card">
+          <h2>Club Profil</h2>
+          <p class="muted">Diese Angaben werden auf der statischen Clubseite verwendet.</p>
+          <form method="post" action="/admin/club" class="stack">
+            <label class="field">
+              <span>Clubname</span>
+              <input type="text" name="name" value="{{ .ClubName }}" required />
+            </label>
+            <label class="field">
+              <span>Beschreibung</span>
+              <textarea name="description" rows="6">{{ .ClubDescription }}</textarea>
+            </label>
+            <button class="button" type="submit">Speichern</button>
+          </form>
+        </div>
+        <div class="card card--accent">
+          <h2>Static Build</h2>
+          <p class="muted">Erzeuge die neue Clubseite aus den aktuellen Daten.</p>
+          {{ if .ClubSlug }}
+          <div class="slug">
+            <span>Dein Slug</span>
+            <strong>{{ .ClubSlug }}</strong>
+          </div>
+          {{ end }}
+          {{ if .PreviewPath }}
+          <a class="button button--ghost" href="{{ .PreviewPath }}" target="_blank" rel="noreferrer">Preview oeffnen</a>
+          {{ end }}
+          <form method="post" action="/admin/build" class="stack">
+            <button class="button" type="submit">Static Site bauen</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

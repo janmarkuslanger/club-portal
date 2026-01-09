@@ -112,7 +112,7 @@
           <div class="card card--wide">
             <h2>Kursplan</h2>
             <p class="muted">Mehrere Kurse koennen parallel laufen, einfach mit gleicher Zeit anlegen.</p>
-            <div class="course-table">
+            <div class="course-table" id="course-table">
               <div class="course-table__head">
                 <div>Kurs</div>
                 <div>Tag</div>
@@ -144,6 +144,29 @@
               </div>
               {{ end }}
             </div>
+            <div class="course-actions">
+              <button class="button button--ghost" type="button" id="add-course">Kurs hinzufuegen</button>
+            </div>
+            <template id="course-row-template">
+              <div class="course-table__row">
+                <input class="input" type="text" name="course_title" placeholder="Kursname" />
+                <select class="select" name="course_day">
+                  <option value="1" selected>Montag</option>
+                  <option value="2">Dienstag</option>
+                  <option value="3">Mittwoch</option>
+                  <option value="4">Donnerstag</option>
+                  <option value="5">Freitag</option>
+                  <option value="6">Samstag</option>
+                  <option value="7">Sonntag</option>
+                </select>
+                <input class="input" type="text" name="course_start" placeholder="18:00" />
+                <input class="input" type="text" name="course_end" placeholder="19:30" />
+                <input class="input" type="text" name="course_location" placeholder="Halle A" />
+                <input class="input" type="text" name="course_instructor" placeholder="Trainer" />
+                <input class="input" type="text" name="course_level" placeholder="Alle Level" />
+                <input class="input" type="text" name="course_description" placeholder="Hinweis" />
+              </div>
+            </template>
           </div>
         </section>
         <button class="button" type="submit">Speichern</button>
@@ -167,5 +190,19 @@
         </div>
       </section>
     </main>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var addButton = document.getElementById("add-course");
+        var table = document.getElementById("course-table");
+        var template = document.getElementById("course-row-template");
+        if (!addButton || !table || !template) {
+          return;
+        }
+        addButton.addEventListener("click", function () {
+          var row = template.content.cloneNode(true);
+          table.appendChild(row);
+        });
+      });
+    </script>
   </body>
 </html>

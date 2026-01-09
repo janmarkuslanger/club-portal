@@ -27,7 +27,7 @@ body {
 
 .page {
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .bg-shape {
@@ -201,6 +201,10 @@ body {
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--muted);
+}
+
+.course-actions {
+  margin-top: 16px;
 }
 
 .button {

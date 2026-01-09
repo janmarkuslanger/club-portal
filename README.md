@@ -16,6 +16,15 @@ go run ./cmd/server
 
 Danach unter `http://localhost:8080` oeffnen.
 
+## Styles (DaisyUI)
+
+```bash
+npm install
+npm run build:css
+```
+
+Die gebaute CSS liegt in `static/admin/admin.css` und `static/site/site.css`.
+
 ## Static Build
 
 ```bash

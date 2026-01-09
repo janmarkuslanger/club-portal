@@ -1,41 +1,47 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-theme="emerald">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ .Title }} · Club Portal</title>
     <link rel="stylesheet" href="/admin-assets/admin.css" />
   </head>
-  <body class="page">
-    <div class="bg-shape bg-shape--one"></div>
-    <div class="bg-shape bg-shape--two"></div>
-    <main class="shell">
-      <header class="brand">
-        <span class="brand__badge">CP</span>
-        <div>
-          <p class="brand__eyebrow">Club Portal</p>
-          <h1 class="brand__title">Vereinsleiter Login</h1>
+  <body>
+    <div class="min-h-screen flex items-center justify-center px-6 py-12">
+      <div class="w-full max-w-md space-y-6">
+        <div class="text-center space-y-2">
+          <div class="badge badge-outline">Club Portal</div>
+          <h1 class="text-3xl font-semibold">Vereinsleiter Login</h1>
+          <p class="text-base-content/70">Verwalte deinen Club und baue deine Seite.</p>
         </div>
-      </header>
-      <section class="card">
-        {{ if .Error }}
-        <div class="notice notice--error">{{ .Error }}</div>
-        {{ end }}
-        <form method="post" action="/login" class="stack">
-          <label class="field">
-            <span>E-Mail</span>
-            <input type="email" name="email" value="{{ .Email }}" autocomplete="email" required />
-          </label>
-          <label class="field">
-            <span>Passwort</span>
-            <input type="password" name="password" autocomplete="current-password" required />
-          </label>
-          <button class="button" type="submit">Anmelden</button>
-        </form>
-      </section>
-      <p class="meta">
-        Noch kein Zugang? <a href="/register">Jetzt registrieren</a>
-      </p>
-    </main>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body space-y-4">
+            {{ if .Error }}
+            <div class="alert alert-error">
+              <span>{{ .Error }}</span>
+            </div>
+            {{ end }}
+            <form method="post" action="/login" class="space-y-4">
+              <label class="form-control">
+                <div class="label">
+                  <span class="label-text">E-Mail</span>
+                </div>
+                <input class="input input-bordered w-full" type="email" name="email" value="{{ .Email }}" autocomplete="email" required />
+              </label>
+              <label class="form-control">
+                <div class="label">
+                  <span class="label-text">Passwort</span>
+                </div>
+                <input class="input input-bordered w-full" type="password" name="password" autocomplete="current-password" required />
+              </label>
+              <button class="btn btn-primary w-full" type="submit">Anmelden</button>
+            </form>
+          </div>
+        </div>
+        <p class="text-center text-sm text-base-content/70">
+          Noch kein Zugang? <a class="link link-primary" href="/register">Jetzt registrieren</a>
+        </p>
+      </div>
+    </div>
   </body>
 </html>

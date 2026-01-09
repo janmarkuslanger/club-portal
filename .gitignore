@@ -34,3 +34,6 @@ go.work.sum
 # Local app data + generated static output
 data/
 public/
+
+# Node
+node_modules/

@@ -1,105 +1,140 @@
 {{ define "content" }}
-<section class="hero">
-  <div class="badge">Sportverein</div>
-  <h1>{{ .Name }}</h1>
-  <p class="lede">{{ if .Description }}{{ .Description }}{{ else }}Willkommen bei unserem Verein.{{ end }}</p>
-</section>
-<section class="panel">
-  <h2>Ueber uns</h2>
-  <p class="description">{{ if .Description }}{{ .Description }}{{ else }}Aktuelle Informationen folgen in Kuerze.{{ end }}</p>
-</section>
-<section class="panel">
-  <h2>Kontakt</h2>
-  <div class="info-grid">
-    {{ if .HasContact }}
-    <div class="info-card">
-      <h3>Kontaktperson</h3>
-      <p class="info-line">
-        {{ if .ContactName }}{{ .ContactName }}{{ end }}
-        {{ if .ContactRole }}<br />{{ .ContactRole }}{{ end }}
-      </p>
-      <p class="info-line">
-        {{ if .ContactEmail }}<span>{{ .ContactEmail }}</span><br />{{ end }}
-        {{ if .ContactPhone }}<span>{{ .ContactPhone }}</span>{{ end }}
-      </p>
-      {{ if .ContactWebsite }}
-      <a class="info-link" href="{{ .ContactWebsite }}" target="_blank" rel="noreferrer">Website besuchen</a>
-      {{ end }}
-    </div>
-    {{ end }}
-    {{ if .HasAddress }}
-    <div class="info-card">
-      <h3>Adresse</h3>
-      <p class="info-line">
-        {{ if .AddressLine1 }}{{ .AddressLine1 }}<br />{{ end }}
-        {{ if .AddressLine2 }}{{ .AddressLine2 }}<br />{{ end }}
-        {{ if .AddressPostal }}{{ .AddressPostal }} {{ end }}{{ if .AddressCity }}{{ .AddressCity }}{{ end }}
-        {{ if .AddressCountry }}<br />{{ .AddressCountry }}{{ end }}
-      </p>
-    </div>
-    {{ end }}
-    {{ if not .HasContact }}
-    <div class="info-card">
-      <h3>Kontakt</h3>
-      <p class="info-line">Kontaktdaten folgen in Kuerze.</p>
-    </div>
-    {{ end }}
+<section class="hero bg-base-100/80 backdrop-blur rounded-3xl shadow-xl">
+  <div class="hero-content flex-col items-start">
+    <div class="badge badge-primary">Sportverein</div>
+    <h1 class="text-4xl md:text-5xl font-semibold">{{ .Name }}</h1>
+    <p class="text-base-content/70 max-w-2xl">
+      {{ if .Description }}{{ .Description }}{{ else }}Willkommen bei unserem Verein.{{ end }}
+    </p>
   </div>
 </section>
-<section class="panel">
-  <h2>Oeffnungszeiten</h2>
-  {{ if .HasOpeningHours }}
-  <div class="hours">
-    {{ range .OpeningHours }}
-    <div class="hours__row">
-      <span class="hours__day">{{ .Day }}</span>
-      {{ if .Open }}
-      <span class="hours__time">{{ .Open }}{{ if .Close }} - {{ .Close }}{{ end }}</span>
-      {{ if .Note }}<span class="hours__note">{{ .Note }}</span>{{ end }}
-      {{ else if .Note }}
-      <span class="hours__time">{{ .Note }}</span>
-      {{ else }}
-      <span class="hours__time">geschlossen</span>
-      {{ end }}
+
+<section class="mt-10">
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title">Ueber uns</h2>
+        <p class="text-base-content/70 whitespace-pre-line">
+          {{ if .Description }}{{ .Description }}{{ else }}Aktuelle Informationen folgen in Kuerze.{{ end }}
+        </p>
+      </div>
     </div>
-    {{ end }}
-  </div>
-  {{ else }}
-  <p class="muted">Keine Oeffnungszeiten hinterlegt.</p>
-  {{ end }}
-</section>
-<section class="panel">
-  <h2>Kursplan</h2>
-  {{ if .HasSchedule }}
-  <div class="schedule">
-    {{ range .Schedule }}
-    <div class="schedule-day">
-      <h3>{{ .Day }}</h3>
-      {{ range .Slots }}
-      <div class="slot">
-        <div class="slot__time">{{ .Time }}</div>
-        <div class="slot__courses">
-          {{ range .Courses }}
-          <div class="course">
-            <div class="course__title">{{ .Title }}</div>
-            <div class="course__meta">
-              {{ if .Location }}{{ .Location }}{{ end }}
-              {{ if .Instructor }} · {{ .Instructor }}{{ end }}
-              {{ if .Level }} · {{ .Level }}{{ end }}
-            </div>
-            {{ if .Description }}
-            <div class="course__note">{{ .Description }}</div>
+    <div class="card bg-base-100 shadow">
+      <div class="card-body space-y-4">
+        <h2 class="card-title">Kontakt</h2>
+        <div class="grid gap-4 sm:grid-cols-2">
+          {{ if .HasContact }}
+          <div class="rounded-2xl border border-base-200 p-4">
+            <h3 class="font-semibold">Kontaktperson</h3>
+            <p class="text-sm text-base-content/70">
+              {{ if .ContactName }}{{ .ContactName }}{{ end }}
+              {{ if .ContactRole }}<br />{{ .ContactRole }}{{ end }}
+            </p>
+            <p class="text-sm text-base-content/70">
+              {{ if .ContactEmail }}{{ .ContactEmail }}<br />{{ end }}
+              {{ if .ContactPhone }}{{ .ContactPhone }}{{ end }}
+            </p>
+            {{ if .ContactWebsite }}
+            <a class="link link-primary text-sm" href="{{ .ContactWebsite }}" target="_blank" rel="noreferrer">Website besuchen</a>
             {{ end }}
+          </div>
+          {{ end }}
+          {{ if .HasAddress }}
+          <div class="rounded-2xl border border-base-200 p-4">
+            <h3 class="font-semibold">Adresse</h3>
+            <p class="text-sm text-base-content/70">
+              {{ if .AddressLine1 }}{{ .AddressLine1 }}<br />{{ end }}
+              {{ if .AddressLine2 }}{{ .AddressLine2 }}<br />{{ end }}
+              {{ if .AddressPostal }}{{ .AddressPostal }} {{ end }}{{ if .AddressCity }}{{ .AddressCity }}{{ end }}
+              {{ if .AddressCountry }}<br />{{ .AddressCountry }}{{ end }}
+            </p>
+          </div>
+          {{ end }}
+          {{ if not .HasContact }}
+          <div class="rounded-2xl border border-base-200 p-4">
+            <h3 class="font-semibold">Kontakt</h3>
+            <p class="text-sm text-base-content/70">Kontaktdaten folgen in Kuerze.</p>
           </div>
           {{ end }}
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="mt-10">
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <div class="flex items-center justify-between">
+        <h2 class="card-title">Oeffnungszeiten</h2>
+        {{ if .HasOpeningHours }}
+        <div class="badge badge-outline">Standort</div>
+        {{ end }}
+      </div>
+      {{ if .HasOpeningHours }}
+      <div class="mt-4 space-y-2">
+        {{ range .OpeningHours }}
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-base-200 px-4 py-3">
+          <span class="font-medium">{{ .Day }}</span>
+          <span class="text-sm text-base-content/70">
+            {{ if .Open }}{{ .Open }}{{ if .Close }} - {{ .Close }}{{ end }}{{ else if .Note }}{{ .Note }}{{ else }}geschlossen{{ end }}
+          </span>
+          {{ if .Note }}
+          <span class="text-sm text-base-content/50">{{ .Note }}</span>
+          {{ end }}
+        </div>
+        {{ end }}
+      </div>
+      {{ else }}
+      <p class="text-base-content/70">Keine Oeffnungszeiten hinterlegt.</p>
       {{ end }}
     </div>
-    {{ end }}
   </div>
-  {{ else }}
-  <p class="muted">Kein Kursplan hinterlegt.</p>
-  {{ end }}
+</section>
+
+<section class="mt-10">
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <div class="flex items-center justify-between">
+        <h2 class="card-title">Kursplan</h2>
+        {{ if .HasSchedule }}
+        <div class="badge badge-primary">Aktuell</div>
+        {{ end }}
+      </div>
+      {{ if .HasSchedule }}
+      <div class="mt-6 space-y-6">
+        {{ range .Schedule }}
+        <div class="rounded-2xl border border-base-200 p-4">
+          <h3 class="text-lg font-semibold">{{ .Day }}</h3>
+          <div class="mt-4 space-y-4">
+            {{ range .Slots }}
+            <div class="rounded-xl border border-base-200 p-4">
+              <div class="text-sm font-semibold text-base-content/70">{{ .Time }}</div>
+              <div class="mt-3 grid gap-3 md:grid-cols-2">
+                {{ range .Courses }}
+                <div class="rounded-xl border border-base-200 p-4">
+                  <div class="font-semibold">{{ .Title }}</div>
+                  <div class="text-sm text-base-content/70">
+                    {{ if .Location }}{{ .Location }}{{ end }}
+                    {{ if .Instructor }} · {{ .Instructor }}{{ end }}
+                    {{ if .Level }} · {{ .Level }}{{ end }}
+                  </div>
+                  {{ if .Description }}
+                  <div class="mt-2 text-sm text-base-content/60">{{ .Description }}</div>
+                  {{ end }}
+                </div>
+                {{ end }}
+              </div>
+            </div>
+            {{ end }}
+          </div>
+        </div>
+        {{ end }}
+      </div>
+      {{ else }}
+      <p class="text-base-content/70">Kein Kursplan hinterlegt.</p>
+      {{ end }}
+    </div>
+  </div>
 </section>
 {{ end }}

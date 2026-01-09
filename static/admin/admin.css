@@ -107,6 +107,10 @@ body {
   border: 1px solid rgba(255, 107, 74, 0.18);
 }
 
+.card--wide {
+  grid-column: 1 / -1;
+}
+
 .grid {
   display: grid;
   gap: 24px;
@@ -126,7 +130,11 @@ body {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select,
+.input,
+.select {
+  width: 100%;
   border-radius: 14px;
   border: 1px solid var(--border);
   padding: 12px 14px;
@@ -136,9 +144,63 @@ body {
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus,
+.input:focus,
+.select:focus {
   outline: 2px solid rgba(255, 107, 74, 0.4);
   border-color: rgba(255, 107, 74, 0.6);
+}
+
+.field-row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.table,
+.course-table {
+  display: grid;
+  gap: 12px;
+}
+
+.table__head,
+.table__row {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr 1.5fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.table__head {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.table__cell--day {
+  font-weight: 600;
+}
+
+.course-table {
+  overflow-x: auto;
+}
+
+.course-table__head,
+.course-table__row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.7fr 0.7fr 1fr 1fr 1fr 1.2fr;
+  gap: 12px;
+  align-items: center;
+  min-width: 920px;
+}
+
+.course-table__head {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
 }
 
 .button {

@@ -25,22 +25,130 @@
       {{ if .Info }}
       <div class="notice notice--info">{{ .Info }}</div>
       {{ end }}
+      <form method="post" action="/admin/club" class="stack">
+        <section class="grid">
+          <div class="card">
+            <h2>Club Profil</h2>
+            <p class="muted">Diese Angaben werden auf der statischen Clubseite verwendet.</p>
+            <div class="stack">
+              <label class="field">
+                <span>Clubname</span>
+                <input type="text" name="name" value="{{ .ClubName }}" required />
+              </label>
+              <label class="field">
+                <span>Beschreibung</span>
+                <textarea name="description" rows="6">{{ .ClubDescription }}</textarea>
+              </label>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Kontakt</h2>
+            <div class="stack">
+              <label class="field">
+                <span>Kontaktperson</span>
+                <input type="text" name="contact_name" value="{{ .ContactName }}" />
+              </label>
+              <label class="field">
+                <span>Rolle</span>
+                <input type="text" name="contact_role" value="{{ .ContactRole }}" />
+              </label>
+              <label class="field">
+                <span>Kontakt E-Mail</span>
+                <input type="email" name="contact_email" value="{{ .ContactEmail }}" />
+              </label>
+              <label class="field">
+                <span>Telefon</span>
+                <input type="text" name="contact_phone" value="{{ .ContactPhone }}" />
+              </label>
+              <label class="field">
+                <span>Website</span>
+                <input type="text" name="contact_website" value="{{ .ContactWebsite }}" />
+              </label>
+              <label class="field">
+                <span>Adresse Zeile 1</span>
+                <input type="text" name="address_line1" value="{{ .AddressLine1 }}" />
+              </label>
+              <label class="field">
+                <span>Adresse Zeile 2</span>
+                <input type="text" name="address_line2" value="{{ .AddressLine2 }}" />
+              </label>
+              <div class="field-row">
+                <label class="field">
+                  <span>PLZ</span>
+                  <input type="text" name="address_postal" value="{{ .AddressPostal }}" />
+                </label>
+                <label class="field">
+                  <span>Ort</span>
+                  <input type="text" name="address_city" value="{{ .AddressCity }}" />
+                </label>
+              </div>
+              <label class="field">
+                <span>Land</span>
+                <input type="text" name="address_country" value="{{ .AddressCountry }}" />
+              </label>
+            </div>
+          </div>
+          <div class="card card--wide">
+            <h2>Oeffnungszeiten</h2>
+            <p class="muted">Grundlegende Oeffnungszeiten fuer das Vereinsbuero oder die Anlage.</p>
+            <div class="table">
+              <div class="table__head">
+                <div>Tag</div>
+                <div>Von</div>
+                <div>Bis</div>
+                <div>Hinweis</div>
+              </div>
+              {{ range .OpeningHours }}
+              <div class="table__row">
+                <div class="table__cell table__cell--day">{{ .DayLabel }}</div>
+                <input type="hidden" name="opening_day" value="{{ .Day }}" />
+                <input class="input" type="text" name="opening_open" value="{{ .Open }}" placeholder="08:00" />
+                <input class="input" type="text" name="opening_close" value="{{ .Close }}" placeholder="18:00" />
+                <input class="input" type="text" name="opening_note" value="{{ .Note }}" placeholder="nach Vereinbarung" />
+              </div>
+              {{ end }}
+            </div>
+          </div>
+          <div class="card card--wide">
+            <h2>Kursplan</h2>
+            <p class="muted">Mehrere Kurse koennen parallel laufen, einfach mit gleicher Zeit anlegen.</p>
+            <div class="course-table">
+              <div class="course-table__head">
+                <div>Kurs</div>
+                <div>Tag</div>
+                <div>Start</div>
+                <div>Ende</div>
+                <div>Ort</div>
+                <div>Trainer</div>
+                <div>Level</div>
+                <div>Hinweis</div>
+              </div>
+              {{ range .Courses }}
+              <div class="course-table__row">
+                <input class="input" type="text" name="course_title" value="{{ .Title }}" placeholder="Kursname" />
+                <select class="select" name="course_day">
+                  <option value="1" {{ if eq .Day 1 }}selected{{ end }}>Montag</option>
+                  <option value="2" {{ if eq .Day 2 }}selected{{ end }}>Dienstag</option>
+                  <option value="3" {{ if eq .Day 3 }}selected{{ end }}>Mittwoch</option>
+                  <option value="4" {{ if eq .Day 4 }}selected{{ end }}>Donnerstag</option>
+                  <option value="5" {{ if eq .Day 5 }}selected{{ end }}>Freitag</option>
+                  <option value="6" {{ if eq .Day 6 }}selected{{ end }}>Samstag</option>
+                  <option value="7" {{ if eq .Day 7 }}selected{{ end }}>Sonntag</option>
+                </select>
+                <input class="input" type="text" name="course_start" value="{{ .Start }}" placeholder="18:00" />
+                <input class="input" type="text" name="course_end" value="{{ .End }}" placeholder="19:30" />
+                <input class="input" type="text" name="course_location" value="{{ .Location }}" placeholder="Halle A" />
+                <input class="input" type="text" name="course_instructor" value="{{ .Instructor }}" placeholder="Trainer" />
+                <input class="input" type="text" name="course_level" value="{{ .Level }}" placeholder="Alle Level" />
+                <input class="input" type="text" name="course_description" value="{{ .Description }}" placeholder="Hinweis" />
+              </div>
+              {{ end }}
+            </div>
+          </div>
+        </section>
+        <button class="button" type="submit">Speichern</button>
+      </form>
       <section class="grid">
-        <div class="card">
-          <h2>Club Profil</h2>
-          <p class="muted">Diese Angaben werden auf der statischen Clubseite verwendet.</p>
-          <form method="post" action="/admin/club" class="stack">
-            <label class="field">
-              <span>Clubname</span>
-              <input type="text" name="name" value="{{ .ClubName }}" required />
-            </label>
-            <label class="field">
-              <span>Beschreibung</span>
-              <textarea name="description" rows="6">{{ .ClubDescription }}</textarea>
-            </label>
-            <button class="button" type="submit">Speichern</button>
-          </form>
-        </div>
         <div class="card card--accent">
           <h2>Static Build</h2>
           <p class="muted">Erzeuge die neue Clubseite aus den aktuellen Daten.</p>

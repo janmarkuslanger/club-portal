@@ -12,15 +12,19 @@ type templates struct {
 }
 
 func loadTemplates(dir string) (templates, error) {
-	login, err := template.ParseFiles(filepath.Join(dir, "login.html"))
+	funcs := template.FuncMap{
+		"eq": func(a, b any) bool { return a == b },
+	}
+
+	login, err := template.New("login.html").Funcs(funcs).ParseFiles(filepath.Join(dir, "login.html"))
 	if err != nil {
 		return templates{}, err
 	}
-	register, err := template.ParseFiles(filepath.Join(dir, "register.html"))
+	register, err := template.New("register.html").Funcs(funcs).ParseFiles(filepath.Join(dir, "register.html"))
 	if err != nil {
 		return templates{}, err
 	}
-	dashboard, err := template.ParseFiles(filepath.Join(dir, "dashboard.html"))
+	dashboard, err := template.New("dashboard.html").Funcs(funcs).ParseFiles(filepath.Join(dir, "dashboard.html"))
 	if err != nil {
 		return templates{}, err
 	}

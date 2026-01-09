@@ -33,13 +33,51 @@ type User struct {
 }
 
 type Club struct {
-	ID          string    `json:"id" gorm:"primaryKey;size:32"`
-	OwnerID     string    `json:"owner_id" gorm:"uniqueIndex;size:32;not null"`
-	Name        string    `json:"name" gorm:"not null"`
-	Description string    `json:"description"`
-	Slug        string    `json:"slug" gorm:"uniqueIndex;size:160;not null"`
-	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	ID          string `json:"id" gorm:"primaryKey;size:32"`
+	OwnerID     string `json:"owner_id" gorm:"uniqueIndex;size:32;not null"`
+	Name        string `json:"name" gorm:"not null"`
+	Description string `json:"description"`
+	Slug        string `json:"slug" gorm:"uniqueIndex;size:160;not null"`
+
+	ContactName    string `json:"contact_name" gorm:"size:120"`
+	ContactRole    string `json:"contact_role" gorm:"size:120"`
+	ContactEmail   string `json:"contact_email" gorm:"size:320"`
+	ContactPhone   string `json:"contact_phone" gorm:"size:50"`
+	ContactWebsite string `json:"contact_website" gorm:"size:200"`
+
+	AddressLine1   string `json:"address_line_1" gorm:"size:200"`
+	AddressLine2   string `json:"address_line_2" gorm:"size:200"`
+	AddressPostal  string `json:"address_postal" gorm:"size:20"`
+	AddressCity    string `json:"address_city" gorm:"size:120"`
+	AddressCountry string `json:"address_country" gorm:"size:120"`
+
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
+	OpeningHours []OpeningHour `json:"opening_hours" gorm:"foreignKey:ClubID;references:ID;constraint:OnDelete:CASCADE"`
+	Courses      []Course      `json:"courses" gorm:"foreignKey:ClubID;references:ID;constraint:OnDelete:CASCADE"`
+}
+
+type OpeningHour struct {
+	ID        uint   `json:"id" gorm:"primaryKey"`
+	ClubID    string `json:"club_id" gorm:"index;size:32;not null"`
+	DayOfWeek int    `json:"day_of_week" gorm:"not null"`
+	OpensAt   string `json:"opens_at" gorm:"size:5"`
+	ClosesAt  string `json:"closes_at" gorm:"size:5"`
+	Note      string `json:"note" gorm:"size:200"`
+}
+
+type Course struct {
+	ID          uint   `json:"id" gorm:"primaryKey"`
+	ClubID      string `json:"club_id" gorm:"index;size:32;not null"`
+	DayOfWeek   int    `json:"day_of_week" gorm:"not null"`
+	Title       string `json:"title" gorm:"not null"`
+	StartTime   string `json:"start_time" gorm:"size:5"`
+	EndTime     string `json:"end_time" gorm:"size:5"`
+	Location    string `json:"location" gorm:"size:120"`
+	Instructor  string `json:"instructor" gorm:"size:120"`
+	Level       string `json:"level" gorm:"size:120"`
+	Description string `json:"description" gorm:"size:400"`
 }
 
 type Store struct {
@@ -50,6 +88,49 @@ type Store struct {
 
 type PasswordPolicy struct {
 	MinLength int
+}
+
+type ClubUpdate struct {
+	Name        string
+	Description string
+
+	ContactName    string
+	ContactRole    string
+	ContactEmail   string
+	ContactPhone   string
+	ContactWebsite string
+
+	AddressLine1   string
+	AddressLine2   string
+	AddressPostal  string
+	AddressCity    string
+	AddressCountry string
+}
+
+type OpeningHourInput struct {
+	DayOfWeek int
+	OpensAt   string
+	ClosesAt  string
+	Note      string
+}
+
+type CourseInput struct {
+	DayOfWeek   int
+	Title       string
+	StartTime   string
+	EndTime     string
+	Location    string
+	Instructor  string
+	Level       string
+	Description string
+}
+
+type ExampleSeed struct {
+	Email        string
+	Password     string
+	Club         Club
+	OpeningHours []OpeningHourInput
+	Courses      []CourseInput
 }
 
 func NewStore(path string) (*Store, error) {
@@ -66,7 +147,7 @@ func NewStore(path string) (*Store, error) {
 		return nil, err
 	}
 
-	if err := db.AutoMigrate(&User{}, &Club{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &Club{}, &OpeningHour{}, &Course{}); err != nil {
 		return nil, err
 	}
 
@@ -152,20 +233,21 @@ func (s *Store) GetUser(id string) (User, bool) {
 
 func (s *Store) GetClubByOwner(ownerID string) (Club, bool) {
 	var club Club
-	if err := s.db.Where("owner_id = ?", ownerID).First(&club).Error; err != nil {
+	if err := s.db.Preload("OpeningHours", orderOpeningHours).
+		Preload("Courses", orderCourses).
+		Where("owner_id = ?", ownerID).First(&club).Error; err != nil {
 		return Club{}, false
 	}
 	return club, true
 }
 
-func (s *Store) UpsertClub(ownerID, name, description string) (Club, error) {
-	cleanName := strings.TrimSpace(name)
-	if cleanName == "" {
+func (s *Store) UpsertClub(ownerID string, update ClubUpdate) (Club, error) {
+	clean := sanitizeClubUpdate(update)
+	if clean.Name == "" {
 		return Club{}, ErrNameRequired
 	}
 
-	cleanDescription := strings.TrimSpace(description)
-	slugBase := slugify(cleanName)
+	slugBase := slugify(clean.Name)
 	if slugBase == "" {
 		slugBase = "club"
 	}
@@ -191,9 +273,21 @@ func (s *Store) UpsertClub(ownerID, name, description string) (Club, error) {
 
 		now := time.Now().UTC()
 		if hasExisting {
-			existing.Name = cleanName
-			existing.Description = cleanDescription
+			existing.Name = clean.Name
+			existing.Description = clean.Description
 			existing.Slug = uniqueSlug
+
+			existing.ContactName = clean.ContactName
+			existing.ContactRole = clean.ContactRole
+			existing.ContactEmail = clean.ContactEmail
+			existing.ContactPhone = clean.ContactPhone
+			existing.ContactWebsite = clean.ContactWebsite
+			existing.AddressLine1 = clean.AddressLine1
+			existing.AddressLine2 = clean.AddressLine2
+			existing.AddressPostal = clean.AddressPostal
+			existing.AddressCity = clean.AddressCity
+			existing.AddressCountry = clean.AddressCountry
+
 			existing.UpdatedAt = now
 			if err := tx.Save(&existing).Error; err != nil {
 				return err
@@ -205,11 +299,23 @@ func (s *Store) UpsertClub(ownerID, name, description string) (Club, error) {
 		club := Club{
 			ID:          newID(),
 			OwnerID:     ownerID,
-			Name:        cleanName,
-			Description: cleanDescription,
+			Name:        clean.Name,
+			Description: clean.Description,
 			Slug:        uniqueSlug,
-			CreatedAt:   now,
-			UpdatedAt:   now,
+
+			ContactName:    clean.ContactName,
+			ContactRole:    clean.ContactRole,
+			ContactEmail:   clean.ContactEmail,
+			ContactPhone:   clean.ContactPhone,
+			ContactWebsite: clean.ContactWebsite,
+			AddressLine1:   clean.AddressLine1,
+			AddressLine2:   clean.AddressLine2,
+			AddressPostal:  clean.AddressPostal,
+			AddressCity:    clean.AddressCity,
+			AddressCountry: clean.AddressCountry,
+
+			CreatedAt: now,
+			UpdatedAt: now,
 		}
 
 		if err := tx.Create(&club).Error; err != nil {
@@ -221,15 +327,165 @@ func (s *Store) UpsertClub(ownerID, name, description string) (Club, error) {
 	if err != nil {
 		return Club{}, err
 	}
+
 	return result, nil
+}
+
+func (s *Store) ReplaceOpeningHours(clubID string, hours []OpeningHourInput) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("club_id = ?", clubID).Delete(&OpeningHour{}).Error; err != nil {
+			return err
+		}
+
+		items := make([]OpeningHour, 0, len(hours))
+		for _, hour := range hours {
+			if hour.DayOfWeek < 1 || hour.DayOfWeek > 7 {
+				continue
+			}
+			opens := strings.TrimSpace(hour.OpensAt)
+			closes := strings.TrimSpace(hour.ClosesAt)
+			note := strings.TrimSpace(hour.Note)
+			if opens == "" && closes == "" && note == "" {
+				continue
+			}
+			items = append(items, OpeningHour{
+				ClubID:    clubID,
+				DayOfWeek: hour.DayOfWeek,
+				OpensAt:   opens,
+				ClosesAt:  closes,
+				Note:      note,
+			})
+		}
+
+		if len(items) == 0 {
+			return nil
+		}
+
+		return tx.Create(&items).Error
+	})
+}
+
+func (s *Store) ReplaceCourses(clubID string, courses []CourseInput) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("club_id = ?", clubID).Delete(&Course{}).Error; err != nil {
+			return err
+		}
+
+		items := make([]Course, 0, len(courses))
+		for _, course := range courses {
+			title := strings.TrimSpace(course.Title)
+			if title == "" {
+				continue
+			}
+			day := course.DayOfWeek
+			if day < 1 || day > 7 {
+				continue
+			}
+			items = append(items, Course{
+				ClubID:      clubID,
+				DayOfWeek:   day,
+				Title:       title,
+				StartTime:   strings.TrimSpace(course.StartTime),
+				EndTime:     strings.TrimSpace(course.EndTime),
+				Location:    strings.TrimSpace(course.Location),
+				Instructor:  strings.TrimSpace(course.Instructor),
+				Level:       strings.TrimSpace(course.Level),
+				Description: strings.TrimSpace(course.Description),
+			})
+		}
+
+		if len(items) == 0 {
+			return nil
+		}
+
+		return tx.Create(&items).Error
+	})
 }
 
 func (s *Store) AllClubs() []Club {
 	var clubs []Club
-	if err := s.db.Order("name asc").Order("slug asc").Find(&clubs).Error; err != nil {
+	if err := s.db.Preload("OpeningHours", orderOpeningHours).
+		Preload("Courses", orderCourses).
+		Order("name asc").Order("slug asc").Find(&clubs).Error; err != nil {
 		return []Club{}
 	}
 	return clubs
+}
+
+func (s *Store) EnsureExampleClub() (ExampleSeed, bool, error) {
+	var count int64
+	if err := s.db.Table("clubs").
+		Joins("JOIN users ON users.id = clubs.owner_id").
+		Count(&count).Error; err != nil {
+		return ExampleSeed{}, false, err
+	}
+	if count > 0 {
+		return ExampleSeed{}, false, nil
+	}
+
+	email := "demo@club-portal.test"
+	password := "demo1234"
+
+	user, err := s.CreateUser(email, password)
+	if err != nil {
+		return ExampleSeed{}, false, err
+	}
+
+	update := ClubUpdate{
+		Name:        "SV Morgenrot 1922",
+		Description: "Wir sind ein offener Mehrspartenverein mit Fokus auf Gemeinschaft, Gesundheit und sportliche Vielfalt. Neue Mitglieder sind jederzeit willkommen.",
+
+		ContactName:    "Lena Berger",
+		ContactRole:    "Vereinsleitung",
+		ContactEmail:   "kontakt@sv-morgenrot.de",
+		ContactPhone:   "+49 30 1234567",
+		ContactWebsite: "https://sv-morgenrot.de",
+
+		AddressLine1:   "Sportpark Nord",
+		AddressLine2:   "Hallenweg 12",
+		AddressPostal:  "10115",
+		AddressCity:    "Berlin",
+		AddressCountry: "Deutschland",
+	}
+
+	club, err := s.UpsertClub(user.ID, update)
+	if err != nil {
+		return ExampleSeed{}, false, err
+	}
+
+	openingHours := []OpeningHourInput{
+		{DayOfWeek: 1, OpensAt: "09:00", ClosesAt: "12:00"},
+		{DayOfWeek: 2, OpensAt: "16:00", ClosesAt: "20:00"},
+		{DayOfWeek: 3, OpensAt: "09:00", ClosesAt: "12:00"},
+		{DayOfWeek: 4, OpensAt: "16:00", ClosesAt: "20:00"},
+		{DayOfWeek: 5, OpensAt: "14:00", ClosesAt: "18:00"},
+		{DayOfWeek: 6, OpensAt: "10:00", ClosesAt: "13:00"},
+		{DayOfWeek: 7, Note: "geschlossen"},
+	}
+	if err := s.ReplaceOpeningHours(club.ID, openingHours); err != nil {
+		return ExampleSeed{}, false, err
+	}
+
+	courses := []CourseInput{
+		{DayOfWeek: 2, Title: "Functional Training", StartTime: "18:00", EndTime: "19:30", Location: "Halle A", Instructor: "Mara Stein", Level: "Alle Level"},
+		{DayOfWeek: 2, Title: "Yoga Flow", StartTime: "18:00", EndTime: "19:30", Location: "Studio 2", Instructor: "Jonas Weber", Level: "Einsteiger"},
+		{DayOfWeek: 3, Title: "Kinderturnen", StartTime: "17:00", EndTime: "18:30", Location: "Halle B", Instructor: "Lea Schmitt", Level: "6-9 Jahre"},
+		{DayOfWeek: 4, Title: "Badminton Freies Spiel", StartTime: "19:00", EndTime: "20:30", Location: "Halle C", Instructor: "Team"},
+		{DayOfWeek: 6, Title: "Lauftreff", StartTime: "09:30", EndTime: "11:00", Location: "Parkrunde", Instructor: "Max Urban", Level: "Alle Level"},
+	}
+	if err := s.ReplaceCourses(club.ID, courses); err != nil {
+		return ExampleSeed{}, false, err
+	}
+
+	club.OpeningHours = nil
+	club.Courses = nil
+	return ExampleSeed{
+		Email:        email,
+		Password:     password,
+		Club:         club,
+		OpeningHours: openingHours,
+		Courses:      courses,
+	}, true, nil
 }
 
 func (s *Store) minPasswordLength() int {
@@ -239,6 +495,30 @@ func (s *Store) minPasswordLength() int {
 		return minPasswordLength
 	}
 	return s.passwordPolicy.MinLength
+}
+
+func orderOpeningHours(db *gorm.DB) *gorm.DB {
+	return db.Order("day_of_week asc").Order("opens_at asc")
+}
+
+func orderCourses(db *gorm.DB) *gorm.DB {
+	return db.Order("day_of_week asc").Order("start_time asc").Order("title asc")
+}
+
+func sanitizeClubUpdate(update ClubUpdate) ClubUpdate {
+	update.Name = strings.TrimSpace(update.Name)
+	update.Description = strings.TrimSpace(update.Description)
+	update.ContactName = strings.TrimSpace(update.ContactName)
+	update.ContactRole = strings.TrimSpace(update.ContactRole)
+	update.ContactEmail = strings.TrimSpace(update.ContactEmail)
+	update.ContactPhone = strings.TrimSpace(update.ContactPhone)
+	update.ContactWebsite = strings.TrimSpace(update.ContactWebsite)
+	update.AddressLine1 = strings.TrimSpace(update.AddressLine1)
+	update.AddressLine2 = strings.TrimSpace(update.AddressLine2)
+	update.AddressPostal = strings.TrimSpace(update.AddressPostal)
+	update.AddressCity = strings.TrimSpace(update.AddressCity)
+	update.AddressCountry = strings.TrimSpace(update.AddressCountry)
+	return update
 }
 
 func uniqueSlug(tx *gorm.DB, currentClubID, desired string) (string, error) {

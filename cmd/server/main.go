@@ -47,6 +47,9 @@ func main() {
 	}
 
 	app := graft.New()
+	app.UseModule(seedModule{
+		Store: storeInstance,
+	})
 	app.UseModule(staticModule{
 		AdminAssetsDir: filepath.Join("static", "admin"),
 		SiteAssetsDir:  filepath.Join(outputDir, "assets"),

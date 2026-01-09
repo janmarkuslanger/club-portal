@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -13,5 +13,50 @@
     background: radial-gradient(circle at top left, #d1fae5, transparent 55%),
       radial-gradient(circle at bottom right, #fde68a, transparent 45%),
       linear-gradient(160deg, #f8fafc 0%, #fef3c7 100%);
+  }
+}
+
+@layer utilities {
+  @keyframes rise {
+    0% {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float-slow {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-16px);
+    }
+  }
+
+  .animate-rise {
+    animation: rise 0.7s ease-out both;
+  }
+
+  .animate-rise-200 {
+    animation: rise 0.7s ease-out both;
+    animation-delay: 0.2s;
+  }
+
+  .animate-rise-400 {
+    animation: rise 0.7s ease-out both;
+    animation-delay: 0.4s;
+  }
+
+  .animate-float-slow {
+    animation: float-slow 12s ease-in-out infinite;
+  }
+
+  .animate-float-slower {
+    animation: float-slow 16s ease-in-out infinite;
   }
 }

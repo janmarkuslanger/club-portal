@@ -4,6 +4,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ["Space Grotesk", "sans-serif"],
+        display: ["Fraunces", "serif"],
       },
     },
   },

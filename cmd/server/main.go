@@ -9,23 +9,18 @@ import (
 	"time"
 
 	"github.com/janmarkuslanger/club-portal/internal/auth"
-	"github.com/janmarkuslanger/club-portal/internal/site"
 	"github.com/janmarkuslanger/club-portal/internal/store"
 	"github.com/janmarkuslanger/graft/graft"
 )
 
 const (
-	defaultDataPath    = "data/store.db"
-	defaultOutputDir   = "public"
-	defaultTemplateDir = "templates/site"
-	defaultAssetDir    = "static/site"
+	defaultDataPath  = "data/store.db"
+	defaultOutputDir = "public"
 )
 
 func main() {
 	dataPath := envOrDefault("DATA_PATH", defaultDataPath)
 	outputDir := envOrDefault("OUTPUT_DIR", defaultOutputDir)
-	templateDir := envOrDefault("TEMPLATE_DIR", defaultTemplateDir)
-	assetDir := envOrDefault("ASSET_DIR", defaultAssetDir)
 
 	storeInstance, err := store.NewStore(dataPath)
 	if err != nil {
@@ -40,11 +35,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	buildOptions := site.BuildOptions{
-		OutputDir:   outputDir,
-		TemplateDir: templateDir,
-		AssetDir:    assetDir,
-	}
+	buildDebounce := envDuration("BUILD_DEBOUNCE", 2*time.Minute)
 
 	app := graft.New()
 	app.UseModule(seedModule{
@@ -67,11 +58,11 @@ func main() {
 		CookieSecure: cookieSecure,
 	}))
 	app.UseModule(adminModule(adminDeps{
-		Store:        storeInstance,
-		Sessions:     sessions,
-		Templates:    tmpls,
-		BuildOptions: buildOptions,
-		CookieSecure: cookieSecure,
+		Store:         storeInstance,
+		Sessions:      sessions,
+		Templates:     tmpls,
+		BuildDebounce: buildDebounce,
+		CookieSecure:  cookieSecure,
 	}))
 
 	log.Println("club-portal server running on :8080")

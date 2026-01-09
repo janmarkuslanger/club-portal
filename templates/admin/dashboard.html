@@ -241,16 +241,13 @@
         <div class="card bg-base-100 shadow">
           <div class="card-body space-y-3">
             <h2 class="card-title">Static Build</h2>
-            <p class="text-sm text-base-content/70">Erzeuge die neue Clubseite aus den aktuellen Daten.</p>
+            <p class="text-sm text-base-content/70">Der Build wird automatisch nach dem Speichern angestossen.</p>
             {{ if .ClubSlug }}
             <div class="badge badge-outline">Slug: {{ .ClubSlug }}</div>
             {{ end }}
             {{ if .PreviewPath }}
             <a class="btn btn-outline" href="{{ .PreviewPath }}" target="_blank" rel="noreferrer">Preview oeffnen</a>
             {{ end }}
-            <form method="post" action="/admin/build">
-              <button class="btn btn-primary" type="submit">Static Site bauen</button>
-            </form>
           </div>
         </div>
       </div>

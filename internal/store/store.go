@@ -23,7 +23,13 @@ var (
 	ErrPasswordTooShort   = errors.New("password too short")
 )
 
-const minPasswordLength = 8
+const (
+	minPasswordLength  = 8
+	buildTaskKey       = "site_build"
+	buildStatusIdle    = "idle"
+	buildStatusPending = "pending"
+	buildStatusRunning = "running"
+)
 
 type User struct {
 	ID           string    `json:"id" gorm:"primaryKey;size:32"`
@@ -78,6 +84,16 @@ type Course struct {
 	Instructor  string `json:"instructor" gorm:"size:120"`
 	Level       string `json:"level" gorm:"size:120"`
 	Description string `json:"description" gorm:"size:400"`
+}
+
+type BuildTask struct {
+	ID          uint      `json:"id" gorm:"primaryKey"`
+	Key         string    `json:"key" gorm:"uniqueIndex;size:40;not null"`
+	Status      string    `json:"status" gorm:"size:20;not null"`
+	NextRunAt   time.Time `json:"next_run_at"`
+	LastEventAt time.Time `json:"last_event_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type Store struct {
@@ -147,7 +163,7 @@ func NewStore(path string) (*Store, error) {
 		return nil, err
 	}
 
-	if err := db.AutoMigrate(&User{}, &Club{}, &OpeningHour{}, &Course{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &Club{}, &OpeningHour{}, &Course{}, &BuildTask{}); err != nil {
 		return nil, err
 	}
 
@@ -486,6 +502,95 @@ func (s *Store) EnsureExampleClub() (ExampleSeed, bool, error) {
 		OpeningHours: openingHours,
 		Courses:      courses,
 	}, true, nil
+}
+
+func (s *Store) EnqueueBuildTask(debounce time.Duration) error {
+	now := time.Now().UTC()
+	if debounce < 0 {
+		debounce = 0
+	}
+	next := now.Add(debounce)
+
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		var task BuildTask
+		err := tx.Where("key = ?", buildTaskKey).First(&task).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			task = BuildTask{
+				Key:         buildTaskKey,
+				Status:      buildStatusPending,
+				NextRunAt:   next,
+				LastEventAt: now,
+			}
+			return tx.Create(&task).Error
+		}
+		if err != nil {
+			return err
+		}
+
+		task.NextRunAt = next
+		task.LastEventAt = now
+		if task.Status != buildStatusRunning {
+			task.Status = buildStatusPending
+		}
+
+		return tx.Save(&task).Error
+	})
+}
+
+func (s *Store) ClaimBuildTask(now time.Time) (BuildTask, bool, error) {
+	var task BuildTask
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(&BuildTask{}).
+			Where("key = ? AND status = ? AND next_run_at <= ?", buildTaskKey, buildStatusPending, now).
+			Updates(map[string]any{
+				"status": buildStatusRunning,
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+		return tx.Where("key = ?", buildTaskKey).First(&task).Error
+	})
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return BuildTask{}, false, nil
+	}
+	if err != nil {
+		return BuildTask{}, false, err
+	}
+	return task, true, nil
+}
+
+func (s *Store) CompleteBuildTask(taskID uint) error {
+	now := time.Now().UTC()
+	var task BuildTask
+	if err := s.db.First(&task, taskID).Error; err != nil {
+		return err
+	}
+
+	if task.NextRunAt.After(now) {
+		task.Status = buildStatusPending
+	} else {
+		task.Status = buildStatusIdle
+		task.NextRunAt = time.Time{}
+	}
+
+	return s.db.Save(&task).Error
+}
+
+func (s *Store) RescheduleBuildTask(taskID uint, delay time.Duration) error {
+	if delay < 0 {
+		delay = 0
+	}
+	next := time.Now().UTC().Add(delay)
+
+	return s.db.Model(&BuildTask{}).
+		Where("id = ?", taskID).
+		Updates(map[string]any{
+			"status":      buildStatusPending,
+			"next_run_at": next,
+		}).Error
 }
 
 func (s *Store) minPasswordLength() int {

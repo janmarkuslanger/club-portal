@@ -2,12 +2,13 @@ package main
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/janmarkuslanger/club-portal/internal/auth"
-	"github.com/janmarkuslanger/club-portal/internal/site"
 	"github.com/janmarkuslanger/club-portal/internal/store"
 	"github.com/janmarkuslanger/graft/module"
 	"github.com/janmarkuslanger/graft/router"
@@ -16,11 +17,11 @@ import (
 const courseExtraRows = 3
 
 type adminDeps struct {
-	Store        *store.Store
-	Sessions     *auth.Manager
-	Templates    templates
-	BuildOptions site.BuildOptions
-	CookieSecure bool
+	Store         *store.Store
+	Sessions      *auth.Manager
+	Templates     templates
+	BuildDebounce time.Duration
+	CookieSecure  bool
 }
 
 func adminModule(deps adminDeps) *module.Module[adminDeps] {
@@ -32,7 +33,6 @@ func adminModule(deps adminDeps) *module.Module[adminDeps] {
 		Routes: []module.Route[adminDeps]{
 			{Method: http.MethodGet, Path: "/admin", Handler: handleDashboard},
 			{Method: http.MethodPost, Path: "/admin/club", Handler: handleClubUpdate},
-			{Method: http.MethodPost, Path: "/admin/build", Handler: handleBuild},
 			{Method: http.MethodPost, Path: "/logout", Handler: handleLogout},
 		},
 	}
@@ -50,9 +50,6 @@ func handleDashboard(ctx router.Context, deps adminDeps) {
 	info := ""
 	if ctx.Request.URL.Query().Get("saved") == "1" {
 		info = "Club gespeichert."
-	}
-	if ctx.Request.URL.Query().Get("build") == "1" {
-		info = "Static site aktualisiert."
 	}
 
 	data := dashboardDataFromClub(club, hasClub)
@@ -123,27 +120,11 @@ func handleClubUpdate(ctx router.Context, deps adminDeps) {
 		return
 	}
 
+	if err := deps.Store.EnqueueBuildTask(deps.BuildDebounce); err != nil {
+		log.Printf("failed to enqueue build task: %v", err)
+	}
+
 	http.Redirect(ctx.Writer, ctx.Request, "/admin?saved=1", http.StatusSeeOther)
-}
-
-func handleBuild(ctx router.Context, deps adminDeps) {
-	userID, ok := sessionUserID(deps.Sessions, ctx.Request)
-	if !ok {
-		http.Redirect(ctx.Writer, ctx.Request, "/login", http.StatusSeeOther)
-		return
-	}
-
-	clubs := deps.Store.AllClubs()
-	if err := site.Build(clubs, deps.BuildOptions); err != nil {
-		club, hasClub := deps.Store.GetClubByOwner(userID)
-		data := dashboardDataFromClub(club, hasClub)
-		data.Title = "Dashboard"
-		data.Error = "Build fehlgeschlagen. Bitte erneut versuchen."
-		renderTemplate(ctx.Writer, deps.Templates.dashboard, data)
-		return
-	}
-
-	http.Redirect(ctx.Writer, ctx.Request, "/admin?build=1", http.StatusSeeOther)
 }
 
 func handleLogout(ctx router.Context, deps adminDeps) {

@@ -159,6 +159,7 @@ func clubErrorMessage(err error) string {
 
 func dashboardDataFromClub(club store.Club, hasClub bool) dashboardData {
 	data := dashboardData{
+		AppName:         appName(),
 		ClubName:        club.Name,
 		ClubDescription: club.Description,
 		ClubSlug:        club.Slug,
@@ -183,6 +184,7 @@ func dashboardDataFromClub(club store.Club, hasClub bool) dashboardData {
 
 func dashboardDataFromForm(r *http.Request, clubSlug string) dashboardData {
 	data := dashboardData{
+		AppName:         appName(),
 		ClubName:        r.FormValue("name"),
 		ClubDescription: r.FormValue("description"),
 		ClubSlug:        clubSlug,

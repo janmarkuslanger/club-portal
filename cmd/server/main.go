@@ -65,7 +65,7 @@ func main() {
 		CookieSecure:  cookieSecure,
 	}))
 
-	log.Println("club-portal server running on :8080")
+	log.Printf("%s server running on :8080", appName())
 	app.Run()
 }
 

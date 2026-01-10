@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/janmarkuslanger/club-portal/internal/auth"
+	"github.com/janmarkuslanger/club-portal/internal/i18n"
 )
 
 const sessionCookieName = "club_portal_session"
@@ -54,4 +55,8 @@ func errorMessage(msg string) string {
 		return ""
 	}
 	return msg
+}
+
+func appName() string {
+	return i18n.AppName()
 }

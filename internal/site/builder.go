@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/janmarkuslanger/club-portal/internal/i18n"
 	"github.com/janmarkuslanger/club-portal/internal/store"
 	"github.com/janmarkuslanger/ssgo/builder"
 	"github.com/janmarkuslanger/ssgo/page"
@@ -59,6 +60,8 @@ func Build(clubs []store.Club, opts BuildOptions) error {
 		opts.AssetDir = filepath.Join("static", "site")
 	}
 
+	appName := i18n.AppName()
+
 	clubBySlug := make(map[string]store.Club, len(clubs))
 	paths := make([]string, 0, len(clubs))
 	for _, club := range clubs {
@@ -80,6 +83,7 @@ func Build(clubs []store.Club, opts BuildOptions) error {
 				club, ok := clubBySlug[slug]
 				if !ok {
 					return map[string]any{
+						"AppName":         appName,
 						"Name":            "Club",
 						"Description":     "",
 						"Slug":            slug,
@@ -97,6 +101,7 @@ func Build(clubs []store.Club, opts BuildOptions) error {
 				hasAddress := club.AddressLine1 != "" || club.AddressLine2 != "" || club.AddressPostal != "" || club.AddressCity != "" || club.AddressCountry != ""
 
 				return map[string]any{
+					"AppName":         appName,
 					"Name":            club.Name,
 					"Description":     club.Description,
 					"Slug":            club.Slug,

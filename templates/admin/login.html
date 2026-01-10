@@ -3,14 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ .Title }} · Club Portal</title>
+    <title>{{ .Title }} · {{ .AppName }}</title>
     <link rel="stylesheet" href="/admin-assets/admin.css" />
   </head>
   <body>
     <div class="min-h-screen flex items-center justify-center px-6 py-12">
       <div class="w-full max-w-md space-y-6">
         <div class="text-center space-y-2">
-          <div class="badge badge-outline">Club Portal</div>
+          <div class="badge badge-outline">{{ .AppName }}</div>
           <h1 class="text-3xl font-semibold">Vereinsleiter Login</h1>
           <p class="text-base-content/70">Verwalte deinen Club und baue deine Seite.</p>
         </div>

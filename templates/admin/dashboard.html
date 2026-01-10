@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ .Title }} · Club Portal</title>
+    <title>{{ .Title }} · {{ .AppName }}</title>
     <link rel="stylesheet" href="/admin-assets/admin.css" />
   </head>
   <body>
@@ -11,7 +11,7 @@
       <div class="navbar bg-base-100/80 backdrop-blur rounded-box shadow">
         <div class="flex-1">
           <div class="flex items-center gap-3">
-            <div class="badge badge-outline">Club Portal</div>
+            <div class="badge badge-outline">{{ .AppName }}</div>
             <span class="text-xl font-semibold">Vereinsbereich</span>
           </div>
         </div>

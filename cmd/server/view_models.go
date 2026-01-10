@@ -1,18 +1,21 @@
 package main
 
 type loginData struct {
-	Title string
-	Error string
-	Email string
+	AppName string
+	Title   string
+	Error   string
+	Email   string
 }
 
 type registerData struct {
-	Title string
-	Error string
-	Email string
+	AppName string
+	Title   string
+	Error   string
+	Email   string
 }
 
 type dashboardData struct {
+	AppName         string
 	Title           string
 	Error           string
 	Info            string

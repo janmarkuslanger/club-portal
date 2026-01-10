@@ -43,9 +43,10 @@ func handleLoginSubmit(ctx router.Context, deps authDeps) {
 	user, err := deps.Store.Authenticate(email, password)
 	if err != nil {
 		data := loginData{
-			Title: "Login",
-			Error: "Login fehlgeschlagen. Bitte pruefe deine Daten.",
-			Email: email,
+			AppName: appName(),
+			Title:   "Login",
+			Error:   "Login fehlgeschlagen. Bitte pruefe deine Daten.",
+			Email:   email,
 		}
 		renderTemplate(ctx.Writer, deps.Templates.login, data)
 		return
@@ -76,9 +77,10 @@ func handleRegisterSubmit(ctx router.Context, deps authDeps) {
 			msg = "Passwort ist zu kurz."
 		}
 		data := registerData{
-			Title: "Registrieren",
-			Error: msg,
-			Email: email,
+			AppName: appName(),
+			Title:   "Registrieren",
+			Error:   msg,
+			Email:   email,
 		}
 		renderTemplate(ctx.Writer, deps.Templates.register, data)
 		return

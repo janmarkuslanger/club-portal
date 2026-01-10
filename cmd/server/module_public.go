@@ -42,9 +42,10 @@ func handleLoginForm(ctx router.Context, deps publicDeps) {
 	}
 
 	data := loginData{
-		Title: "Login",
-		Error: errorMessage(ctx.Request.URL.Query().Get("error")),
-		Email: ctx.Request.URL.Query().Get("email"),
+		AppName: appName(),
+		Title:   "Login",
+		Error:   errorMessage(ctx.Request.URL.Query().Get("error")),
+		Email:   ctx.Request.URL.Query().Get("email"),
 	}
 
 	renderTemplate(ctx.Writer, deps.Templates.login, data)
@@ -57,9 +58,10 @@ func handleRegisterForm(ctx router.Context, deps publicDeps) {
 	}
 
 	data := registerData{
-		Title: "Registrieren",
-		Error: errorMessage(ctx.Request.URL.Query().Get("error")),
-		Email: ctx.Request.URL.Query().Get("email"),
+		AppName: appName(),
+		Title:   "Registrieren",
+		Error:   errorMessage(ctx.Request.URL.Query().Get("error")),
+		Email:   ctx.Request.URL.Query().Get("email"),
 	}
 
 	renderTemplate(ctx.Writer, deps.Templates.register, data)

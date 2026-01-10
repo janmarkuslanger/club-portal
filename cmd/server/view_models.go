@@ -1,5 +1,7 @@
 package main
 
+import "html/template"
+
 type loginData struct {
 	AppName string
 	Title   string
@@ -15,26 +17,30 @@ type registerData struct {
 }
 
 type dashboardData struct {
-	AppName         string
-	Title           string
-	Error           string
-	Info            string
-	ClubName        string
-	ClubDescription string
-	ClubSlug        string
-	PreviewPath     string
-	ContactName     string
-	ContactRole     string
-	ContactEmail    string
-	ContactPhone    string
-	ContactWebsite  string
-	AddressLine1    string
-	AddressLine2    string
-	AddressPostal   string
-	AddressCity     string
-	AddressCountry  string
-	OpeningHours    []openingHourRow
-	Courses         []courseRow
+	AppName           string
+	Title             string
+	Error             string
+	Info              string
+	ClubName          string
+	ClubDescription   string
+	ClubCategories    string
+	CategoryOptions   []categoryOption
+	CategorySelection map[string]bool
+	CategoryCustom    string
+	ClubSlug          string
+	PreviewPath       string
+	ContactName       string
+	ContactRole       string
+	ContactEmail      string
+	ContactPhone      string
+	ContactWebsite    string
+	AddressLine1      string
+	AddressLine2      string
+	AddressPostal     string
+	AddressCity       string
+	AddressCountry    string
+	OpeningHours      []openingHourRow
+	Courses           []courseRow
 }
 
 type homeData struct {
@@ -42,16 +48,25 @@ type homeData struct {
 	Title      string
 	ClubCount  int
 	Cities     []string
+	Categories []homeCategory
 	Clubs      []homeClub
 }
 
+type homeCategory struct {
+	Value string
+	Label string
+	Icon  template.HTML
+}
+
 type homeClub struct {
-	Name       string
-	Slug       string
-	Description string
-	Location   string
-	City       string
-	SearchText string
+	Name           string
+	Slug           string
+	Description    string
+	Location       string
+	City           string
+	Categories     []string
+	SearchText     string
+	CategorySearch string
 }
 
 type openingHourRow struct {

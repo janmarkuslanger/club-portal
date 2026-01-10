@@ -43,6 +43,7 @@ type Club struct {
 	OwnerID     string `json:"owner_id" gorm:"uniqueIndex;size:32;not null"`
 	Name        string `json:"name" gorm:"not null"`
 	Description string `json:"description"`
+	Categories  string `json:"categories" gorm:"size:400"`
 	Slug        string `json:"slug" gorm:"uniqueIndex;size:160;not null"`
 
 	ContactName    string `json:"contact_name" gorm:"size:120"`
@@ -109,6 +110,7 @@ type PasswordPolicy struct {
 type ClubUpdate struct {
 	Name        string
 	Description string
+	Categories  string
 
 	ContactName    string
 	ContactRole    string
@@ -291,6 +293,7 @@ func (s *Store) UpsertClub(ownerID string, update ClubUpdate) (Club, error) {
 		if hasExisting {
 			existing.Name = clean.Name
 			existing.Description = clean.Description
+			existing.Categories = clean.Categories
 			existing.Slug = uniqueSlug
 
 			existing.ContactName = clean.ContactName
@@ -317,6 +320,7 @@ func (s *Store) UpsertClub(ownerID string, update ClubUpdate) (Club, error) {
 			OwnerID:     ownerID,
 			Name:        clean.Name,
 			Description: clean.Description,
+			Categories:  clean.Categories,
 			Slug:        uniqueSlug,
 
 			ContactName:    clean.ContactName,
@@ -450,6 +454,7 @@ func (s *Store) EnsureExampleClub() (ExampleSeed, bool, error) {
 	update := ClubUpdate{
 		Name:        "SV Morgenrot 1922",
 		Description: "Wir sind ein offener Mehrspartenverein mit Fokus auf Gemeinschaft, Gesundheit und sportliche Vielfalt. Neue Mitglieder sind jederzeit willkommen.",
+		Categories:  "Fitness, Yoga, Gesundheitssport",
 
 		ContactName:    "Lena Berger",
 		ContactRole:    "Vereinsleitung",
@@ -613,6 +618,7 @@ func orderCourses(db *gorm.DB) *gorm.DB {
 func sanitizeClubUpdate(update ClubUpdate) ClubUpdate {
 	update.Name = strings.TrimSpace(update.Name)
 	update.Description = strings.TrimSpace(update.Description)
+	update.Categories = normalizeCategories(update.Categories)
 	update.ContactName = strings.TrimSpace(update.ContactName)
 	update.ContactRole = strings.TrimSpace(update.ContactRole)
 	update.ContactEmail = strings.TrimSpace(update.ContactEmail)
@@ -624,6 +630,52 @@ func sanitizeClubUpdate(update ClubUpdate) ClubUpdate {
 	update.AddressCity = strings.TrimSpace(update.AddressCity)
 	update.AddressCountry = strings.TrimSpace(update.AddressCountry)
 	return update
+}
+
+func NormalizeCategories(raw string) string {
+	return normalizeCategories(raw)
+}
+
+func SplitCategories(raw string) []string {
+	return splitCategories(raw)
+}
+
+func normalizeCategories(raw string) string {
+	items := splitCategories(raw)
+	if len(items) == 0 {
+		return ""
+	}
+	return strings.Join(items, ", ")
+}
+
+func splitCategories(raw string) []string {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	parts := strings.FieldsFunc(raw, func(r rune) bool {
+		switch r {
+		case ',', ';', '\n', '\r', '\t':
+			return true
+		default:
+			return false
+		}
+	})
+	seen := make(map[string]struct{})
+	items := make([]string, 0, len(parts))
+	for _, part := range parts {
+		item := strings.TrimSpace(part)
+		if item == "" {
+			continue
+		}
+		item = strings.Join(strings.Fields(item), " ")
+		key := strings.ToLower(item)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		items = append(items, item)
+	}
+	return items
 }
 
 func uniqueSlug(tx *gorm.DB, currentClubID, desired string) (string, error) {

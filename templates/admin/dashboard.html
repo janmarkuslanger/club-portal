@@ -51,6 +51,40 @@
                 </div>
                 <textarea class="textarea textarea-bordered" name="description" rows="6">{{ .ClubDescription }}</textarea>
               </label>
+              <div class="space-y-3">
+                <div class="label">
+                  <span class="label-text">Kategorien</span>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  {{ range .CategoryOptions }}
+                  <label class="flex items-center gap-4 rounded-2xl border border-base-200 bg-base-100 px-4 py-3 shadow-sm">
+                    <input
+                      class="checkbox checkbox-primary"
+                      type="checkbox"
+                      name="category"
+                      value="{{ .Value }}"
+                      {{ if index $.CategorySelection .Value }}checked{{ end }}
+                    />
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-base-200 text-base-content/70">
+                      {{ .Icon }}
+                    </span>
+                    <span class="font-medium">{{ .Label }}</span>
+                  </label>
+                  {{ end }}
+                </div>
+                <label class="form-control">
+                  <div class="label">
+                    <span class="label-text">Weitere Kategorien</span>
+                  </div>
+                  <input
+                    class="input input-bordered w-full"
+                    type="text"
+                    name="category_custom"
+                    value="{{ .CategoryCustom }}"
+                    placeholder="z.B. Klettern, Reha, Turnen"
+                  />
+                </label>
+              </div>
             </div>
           </div>
 

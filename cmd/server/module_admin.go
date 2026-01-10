@@ -76,6 +76,7 @@ func handleClubUpdate(ctx router.Context, deps adminDeps) {
 	update := store.ClubUpdate{
 		Name:           ctx.Request.FormValue("name"),
 		Description:    ctx.Request.FormValue("description"),
+		Categories:     categoriesFromForm(ctx.Request),
 		ContactName:    ctx.Request.FormValue("contact_name"),
 		ContactRole:    ctx.Request.FormValue("contact_role"),
 		ContactEmail:   ctx.Request.FormValue("contact_email"),
@@ -162,6 +163,8 @@ func dashboardDataFromClub(club store.Club, hasClub bool) dashboardData {
 		AppName:         appName(),
 		ClubName:        club.Name,
 		ClubDescription: club.Description,
+		ClubCategories:  club.Categories,
+		CategoryOptions: categoryOptionsList(),
 		ClubSlug:        club.Slug,
 		ContactName:     club.ContactName,
 		ContactRole:     club.ContactRole,
@@ -176,6 +179,7 @@ func dashboardDataFromClub(club store.Club, hasClub bool) dashboardData {
 		OpeningHours:    buildOpeningRows(club.OpeningHours),
 		Courses:         buildCourseRows(club.Courses),
 	}
+	data.CategorySelection, data.CategoryCustom = categorySelection(club.Categories)
 	if hasClub && club.Slug != "" {
 		data.PreviewPath = "/clubs/" + club.Slug + "/"
 	}
@@ -183,10 +187,13 @@ func dashboardDataFromClub(club store.Club, hasClub bool) dashboardData {
 }
 
 func dashboardDataFromForm(r *http.Request, clubSlug string) dashboardData {
+	categories := categoriesFromForm(r)
 	data := dashboardData{
 		AppName:         appName(),
 		ClubName:        r.FormValue("name"),
 		ClubDescription: r.FormValue("description"),
+		ClubCategories:  categories,
+		CategoryOptions: categoryOptionsList(),
 		ClubSlug:        clubSlug,
 		ContactName:     r.FormValue("contact_name"),
 		ContactRole:     r.FormValue("contact_role"),
@@ -201,6 +208,7 @@ func dashboardDataFromForm(r *http.Request, clubSlug string) dashboardData {
 		OpeningHours:    openingRowsFromForm(r),
 		Courses:         courseRowsFromForm(r),
 	}
+	data.CategorySelection, data.CategoryCustom = categorySelection(categories)
 	if clubSlug != "" {
 		data.PreviewPath = "/clubs/" + clubSlug + "/"
 	}

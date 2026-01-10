@@ -9,6 +9,7 @@ type templates struct {
 	login     *template.Template
 	register  *template.Template
 	dashboard *template.Template
+	home      *template.Template
 }
 
 func loadTemplates(dir string) (templates, error) {
@@ -28,10 +29,15 @@ func loadTemplates(dir string) (templates, error) {
 	if err != nil {
 		return templates{}, err
 	}
+	home, err := template.New("home.html").Funcs(funcs).ParseFiles(filepath.Join("templates", "public", "home.html"))
+	if err != nil {
+		return templates{}, err
+	}
 
 	return templates{
 		login:     login,
 		register:  register,
 		dashboard: dashboard,
+		home:      home,
 	}, nil
 }

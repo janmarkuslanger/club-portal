@@ -37,6 +37,23 @@ type dashboardData struct {
 	Courses         []courseRow
 }
 
+type homeData struct {
+	AppName    string
+	Title      string
+	ClubCount  int
+	Cities     []string
+	Clubs      []homeClub
+}
+
+type homeClub struct {
+	Name       string
+	Slug       string
+	Description string
+	Location   string
+	City       string
+	SearchText string
+}
+
 type openingHourRow struct {
 	Day      int
 	DayLabel string

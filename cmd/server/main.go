@@ -50,6 +50,7 @@ func main() {
 	app.UseModule(publicModule(publicDeps{
 		Sessions:  sessions,
 		Templates: tmpls,
+		Store:     storeInstance,
 	}))
 	app.UseModule(authModule(authDeps{
 		Store:        storeInstance,
